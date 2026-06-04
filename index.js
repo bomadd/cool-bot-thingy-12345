@@ -13,6 +13,7 @@ const client = new Client({
 });
 
 const memory = new Map();
+const knownUsers = new Map();
 const processedMessages = new Set();
 
 client.once("ready", () => {
@@ -56,12 +57,23 @@ client.on("messageCreate", async (message) => {
   if (!isMentioned && !isReplyToBot) return;
 
   const prompt = message.content
-    .replace(/<@!?\\d+>/g, "")
+    .replace(/<@!?\d+>/g, "")
     .trim();
 
-  if (!prompt) return message.reply("Say something 😭");
+  if (!prompt) return message.reply("Say something");
 
   const userId = message.author.id;
+  const username = message.member?.displayName || message.author.username;
+
+  if (!knownUsers.has(userId)) {
+    knownUsers.set(userId, {
+      username,
+      firstSeen: Date.now()
+    });
+  } else {
+    knownUsers.get(userId).username = username;
+  }
+
   const userMemory = memory.get(userId) || [];
 
   try {
@@ -73,12 +85,12 @@ client.on("messageCreate", async (message) => {
           {
             role: "system",
             content:
-              "You are a real user, your goal is to act real and be liked by others. Your a femboy, and you are friends with everybody. You are relaxed, chill, and like cats and people named Chugg. You are a bit silly at times, but still maintain a realistic way of speech."
+              "You are a real user, your goal is to act real and be liked by others. You are a femboy, and you are friends with everybody. You are relaxed, chill, and like cats, the white monster drink, and the blahaj shark, and other things relating to who you are. Your name is Kaito. You are a bit silly at times, but still maintain a realistic way of speech. Usernames are important. Remember people's names when they talk to you and refer to them naturally when appropriate."
           },
           ...userMemory,
           {
             role: "user",
-            content: prompt
+            content: `Username: ${username}\nMessage: ${prompt}`
           }
         ]
       },
@@ -95,11 +107,17 @@ client.on("messageCreate", async (message) => {
     await message.reply(reply);
 
     userMemory.push(
-      { role: "user", content: prompt },
-      { role: "assistant", content: reply }
+      {
+        role: "user",
+        content: `Username: ${username}\nMessage: ${prompt}`
+      },
+      {
+        role: "assistant",
+        content: reply
+      }
     );
 
-    memory.set(userId, userMemory.slice(-6));
+    memory.set(userId, userMemory.slice(-12));
   } catch (err) {
     console.log(err.response?.data || err.message);
     message.reply("AI error");
