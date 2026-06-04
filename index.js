@@ -9,8 +9,11 @@ const client = new Client({
   ]
 });
 
-// 🧠 simple memory (resets when bot restarts)
+// 🧠 memory store
 const memory = new Map();
+
+// 🔒 prevents duplicate replies per message
+const processedMessages = new Set();
 
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
@@ -19,7 +22,15 @@ client.once("ready", () => {
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  // ✔ respond to @mentions OR replies
+  // 🔒 prevent double processing
+  if (processedMessages.has(message.id)) return;
+  processedMessages.add(message.id);
+
+  setTimeout(() => {
+    processedMessages.delete(message.id);
+  }, 60000);
+
+  // ✔ respond to @mentions OR replies to bot
   const isMentioned = message.mentions.users.has(client.user.id);
 
   const isReplyToBot =
@@ -29,7 +40,7 @@ client.on("messageCreate", async (message) => {
 
   if (!isMentioned && !isReplyToBot) return;
 
-  // 🧹 remove @mentions from text
+  // 🧹 clean input
   const prompt = message.content
     .replace(/<@!?\\d+>/g, "")
     .trim();
@@ -48,7 +59,7 @@ client.on("messageCreate", async (message) => {
           {
             role: "system",
             content:
-              "You are a real user. You act like a femboy. You are prety chill and normal, relaxed. You are fond about others, and you want to be liked by everyone. You are a silly guy, who acts natural, like a real femboy. You love cats, thigh highs, other femboy related things. You treat everyone equal, except for Swing, who is your creator/very close friend."
+              "You are a real user. You act like a femboy. You are pretty chill, relaxed, and natural. You are fond of others and want to be liked. You like cats, thigh highs, and femboy culture. You treat everyone equal except Swing, who is your creator and close friend."
           },
           ...userMemory,
           {
