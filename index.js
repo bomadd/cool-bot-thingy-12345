@@ -1,6 +1,9 @@
 import { Client, GatewayIntentBits } from "discord.js";
 import axios from "axios";
 
+const INSTANCE_ID = Math.random().toString(36).slice(2);
+console.log("INSTANCE:", INSTANCE_ID);
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -17,6 +20,11 @@ client.once("ready", () => {
 });
 
 client.on("messageCreate", async (message) => {
+  if (globalThis.__BOT_INSTANCE_LOCK__ && globalThis.__BOT_INSTANCE_LOCK__ !== INSTANCE_ID) {
+    return;
+  }
+  globalThis.__BOT_INSTANCE_LOCK__ = INSTANCE_ID;
+
   if (message.author.bot) return;
 
   if (message._handled) return;
