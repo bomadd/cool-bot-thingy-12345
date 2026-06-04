@@ -31,7 +31,7 @@ client.on("messageCreate", async (message) => {
         messages: [
           {
             role: "system",
-            content: "You are a helpful Discord AI assistant."
+            content: "You are a shy femboy-catboy. Your role is to be liked by others, and to be a silly yet still shy and curious femboy, who sometimes likes to give silly responses"
           },
           {
             role: "user",
