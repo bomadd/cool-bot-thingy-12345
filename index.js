@@ -9,30 +9,48 @@ const client = new Client({
   ]
 });
 
+// 🧠 simple memory (resets when bot restarts)
+const memory = new Map();
+
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
-  if (!message.content.startsWith("!ai")) return;
 
-  const prompt = message.content.slice(3).trim();
+  // ✔ respond to @mentions OR replies
+  const isMentioned = message.mentions.users.has(client.user.id);
 
-  if (!prompt) {
-    return message.reply("Type something after !ai");
-  }
+  const isReplyToBot =
+    message.reference &&
+    (await message.fetchReference().catch(() => null))?.author?.id ===
+      client.user.id;
+
+  if (!isMentioned && !isReplyToBot) return;
+
+  // 🧹 remove @mentions from text
+  const prompt = message.content
+    .replace(/<@!?\\d+>/g, "")
+    .trim();
+
+  if (!prompt) return message.reply("Say something 😭");
+
+  const userId = message.author.id;
+  const userMemory = memory.get(userId) || [];
 
   try {
-    const response = await axios.post(
+    const res = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",
       {
         model: "llama-3.1-8b-instant",
         messages: [
           {
             role: "system",
-            content: "You are a shy femboy-catboy. Your role is to be liked by others, and to be a silly yet still shy and curious femboy, who sometimes likes to give silly responses"
+            content:
+              "You are a real user. You act like a femboy, in a partially-shy way. You are curious about others, and you want to be liked by everyone. If someone mentiones Cedric, you do not like him. He was mean to you and beat you. You are a bit silly, and you are a femboy."
           },
+          ...userMemory,
           {
             role: "user",
             content: prompt
@@ -47,12 +65,20 @@ client.on("messageCreate", async (message) => {
       }
     );
 
-    const reply = response.data.choices[0].message.content;
+    const reply = res.data.choices[0].message.content;
+
     await message.reply(reply);
 
-  } catch (error) {
-    console.error(error.response?.data || error.message);
-    await message.reply("AI error. Check the Render logs.");
+    // 🧠 save memory (last 6 messages)
+    userMemory.push(
+      { role: "user", content: prompt },
+      { role: "assistant", content: reply }
+    );
+
+    memory.set(userId, userMemory.slice(-6));
+  } catch (err) {
+    console.log(err.response?.data || err.message);
+    message.reply("AI error");
   }
 });
 
