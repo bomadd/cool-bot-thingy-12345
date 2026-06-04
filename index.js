@@ -9,10 +9,7 @@ const client = new Client({
   ]
 });
 
-// 🧠 memory (resets on restart)
 const memory = new Map();
-
-// 🔒 prevents duplicate processing
 const processedMessages = new Set();
 
 client.once("ready", () => {
@@ -22,14 +19,19 @@ client.once("ready", () => {
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  // ⚠️ fix for partial messages
+  if (message._handled) return;
+  message._handled = true;
+
+  setTimeout(() => {
+    message._handled = false;
+  }, 5000);
+
   if (message.partial) {
     try {
       await message.fetch();
     } catch {}
   }
 
-  // 🔒 prevent duplicate handling of same message
   if (processedMessages.has(message.id)) return;
   processedMessages.add(message.id);
 
@@ -37,10 +39,8 @@ client.on("messageCreate", async (message) => {
     processedMessages.delete(message.id);
   }, 60000);
 
-  // ✔ mention check
   const isMentioned = message.mentions.users.has(client.user.id);
 
-  // ✔ safe reply-to-bot check (FIXED)
   let isReplyToBot = false;
 
   if (message.reference?.messageId) {
@@ -57,7 +57,6 @@ client.on("messageCreate", async (message) => {
 
   if (!isMentioned && !isReplyToBot) return;
 
-  // 🧹 clean prompt
   const prompt = message.content
     .replace(/<@!?\\d+>/g, "")
     .trim();
@@ -97,7 +96,6 @@ client.on("messageCreate", async (message) => {
 
     await message.reply(reply);
 
-    // 🧠 memory (last 6 messages)
     userMemory.push(
       { role: "user", content: prompt },
       { role: "assistant", content: reply }
