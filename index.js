@@ -49,19 +49,9 @@ client.on("messageCreate", async (message) => {
 
   const isMentioned = message.mentions.users.has(client.user.id);
 
-  let isReplyToBot = false;
-
-  if (message.reference?.messageId) {
-    try {
-      const referenced = await message.channel.messages.fetch(
-        message.reference.messageId
-      );
-
-      isReplyToBot = referenced.author.id === client.user.id;
-    } catch {
-      isReplyToBot = false;
-    }
-  }
+  const isReplyToBot =
+    message.reference?.messageId &&
+    message.reference?.channelId === message.channelId;
 
   if (!isMentioned && !isReplyToBot) return;
 
