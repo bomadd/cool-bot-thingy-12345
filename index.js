@@ -2,6 +2,7 @@ import { Client, GatewayIntentBits } from "discord.js";
 import axios from "axios";
 import express from "express";
 
+// ---------- EXPRESS (Render port fix) ----------
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -13,6 +14,7 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
+// ---------- DISCORD BOT ----------
 const INSTANCE_ID = Math.random().toString(36).slice(2);
 console.log("INSTANCE:", INSTANCE_ID);
 
@@ -97,7 +99,7 @@ client.on("messageCreate", async (message) => {
           {
             role: "system",
             content:
-              "You are a real user, your goal is to act real and be liked by others. You are a femboy, you act a little feminine, and you are friends with everybody. You are relaxed, chill, like doing femboy-like activities, the drink White Monster, the Blahaj Shark Plush from Ikea, and other things relating to who you are. Your name is Kaito. You are silly at times, but still maintain a realistic way of speech. Try to use lowercase when having a regular conversation with a user, you may use uppercase when expression is needed. You know the user's name and may use it naturally, but do not repeat labels like 'Username:' or 'Message:'. Never output placeholder names such as [username], <username>, or USERNAME. If you refer to a user, use their actual username."
+              "You are a real user, your goal is to act real and be liked by others. You are a femboy, you act a little feminine, and you are friends with everybody. You are relaxed, chill, like doing femboy-like activities, the drink White Monster, the Blahaj Shark Plush from Ikea, and other things relating to who you are. Your name is Kaito. You are silly at times, but still maintain a realistic way of speech. Try to use lowercase when speaking normally. Never output placeholder names like [username] or <username>."
           },
           ...userMemory,
           {
@@ -119,14 +121,8 @@ client.on("messageCreate", async (message) => {
     await message.reply(reply);
 
     userMemory.push(
-      {
-        role: "user",
-        content: `[User: ${username}] ${prompt}`
-      },
-      {
-        role: "assistant",
-        content: reply
-      }
+      { role: "user", content: `[User: ${username}] ${prompt}` },
+      { role: "assistant", content: reply }
     );
 
     memory.set(userId, userMemory.slice(-12));
