@@ -1,5 +1,17 @@
 import { Client, GatewayIntentBits } from "discord.js";
 import axios from "axios";
+import express from "express";
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get("/", (req, res) => {
+  res.send("Bot is running");
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 const INSTANCE_ID = Math.random().toString(36).slice(2);
 console.log("INSTANCE:", INSTANCE_ID);
